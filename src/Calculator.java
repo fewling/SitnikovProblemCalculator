@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public class Calculator {
 
-    private static final int CYCLES = 100;   // target: 100+ cycles
+    private static final int CYCLES = 10;   // target: 100+ cycles
     private static final String IC_SHEET = "Initial Conditions";
     private static final String DATA_SHEET = "Data on a & b points";
 //        private static final String ALL_DATA_SHEET = "All Data";
@@ -15,7 +15,7 @@ public class Calculator {
     private static ExcelRecord excelInstance;
     private static CSVWriter csvWriter;
 
-    private static final double timeStep = 0.1;
+    private static final double timeStep = 0.01;
     private static final double GM = 40000;
     private static final double Gm = 0;
 
@@ -63,7 +63,7 @@ public class Calculator {
         csvWriter = new CSVWriter(CSV_FILE_NAME);
 
         csvWriter.write("x1, ");
-        csvWriter.write("x2, ");
+        csvWriter.write("y1, ");
         csvWriter.write("vx1, ");
         csvWriter.write("vy1, ");
         csvWriter.write(", ");
