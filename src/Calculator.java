@@ -1,29 +1,31 @@
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class Calculator {
 
-    private static final int CYCLES = 5000;
+    public static final int SKIP_THRESHOLD = 10000;
+    public static final int CYCLES = 20;
+    public static final double TIME_STEP = 0.00001;
 
-    private static final String IC_SHEET = "Initial Conditions";
-    private static final String DATA_SHEET = "Data on a & b points";
-    private static final String CSV_FILE_NAME = "All Data.csv";
-    private static ExcelRecord excelInstance;
-    private static CSVWriter csvWriter;
-
-    private static final double timeStep = 0.01;
     private static final double GM = 40000;
     private static final double Gm = 0;
 
     // set x1, vY1, z3 and vZ3 only:
-    private static double x1 = -500, y1 = 0, x2 = -1 * x1, y2 = 0, z3 = 0;
-    private static double vX1 = 0, vY1 = 7, vX2 = 0, vY2 = -1 * vY1, vZ3 = 1.5;
+    private static double x1 = -500, y1 = 0, x2 = -1 * x1, y2 = 0, z3 = 350;
+    private static double vX1 = 0, vY1 = 7.07, vX2 = 0, vY2 = -1 * vY1, vZ3 = 0;
+
+    public static final String DIRECTORY = String.format("C:\\HP Data\\%s, %s cycles, z3 = %s\\", TIME_STEP, CYCLES, z3);
+    private static final String CSV_FILE_NAME = DIRECTORY + String.format("Coordinates, %s, %s, z3 = %s.csv", TIME_STEP, CYCLES, z3);
+    private static final String IC_SHEET = "Initial Conditions";
+    private static final String DATA_SHEET = "Data on a & b points";
+    private static ExcelWriter excelInstance;
+    private static CSVWriter csvWriter;
 
     private static double minX1, maxX1, minX2, maxX2;
     private static double minY1, maxY1, minY2, maxY2;
@@ -35,16 +37,17 @@ public class Calculator {
     private static int xCount = 0, yCount = 0;
     private static boolean touchedXAxis = false, touchedYAxis = false;
     private static int rows = 0;
-    private static int rowNum = 1;
+    private static double a, b, e;
+    private static int skipSteps = 0;
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
 
         initList();
+        initCSV();
         initExcel();
-//        initCSV();
-//        writePosDataToCSV()
+        writePosDataToCSV();
 
-        while (cycleCount <= CYCLES) {
+        while (cycleCount < CYCLES) {
             calculate();
         }
 
@@ -55,6 +58,10 @@ public class Calculator {
 
 
     private static void initCSV() throws IOException {
+        File theDir = new File(DIRECTORY);
+        if (!theDir.exists()) {
+            theDir.mkdirs();
+        }
         csvWriter = new CSVWriter(CSV_FILE_NAME);
 
         csvWriter.write("counts, ");
@@ -72,7 +79,7 @@ public class Calculator {
         csvWriter.write("vz3 \n");
     }
 
-    private static void calculate() throws InterruptedException {
+    private static void calculate() throws IOException {
         // record current velocities:
         double lastVXOfSphere1 = vX1;
         double lastVYOfSphere1 = vY1;
@@ -90,11 +97,11 @@ public class Calculator {
 
 
         // Calculate and update velocities and locations (M1):
-        vX1 += (((2 * Gm) / powXYZ) - GM / (2 * powXY)) * x1 * timeStep;
-        x1 += lastVXOfSphere1 * timeStep;
+        vX1 += (((2 * Gm) / powXYZ) - GM / (2 * powXY)) * x1 * TIME_STEP;
+        x1 += lastVXOfSphere1 * TIME_STEP;
 
-        vY1 += (((2 * Gm) / powXYZ) - GM / (2 * powXY)) * y1 * timeStep;
-        y1 += lastVYOfSphere1 * timeStep;
+        vY1 += (((2 * Gm) / powXYZ) - GM / (2 * powXY)) * y1 * TIME_STEP;
+        y1 += lastVYOfSphere1 * TIME_STEP;
 
 
         // Just separating the calculation steps for M2
@@ -105,11 +112,11 @@ public class Calculator {
 
 
         // Calculate and update velocities and locations (M2):
-        vX2 += (((2 * Gm) / powXYZ) - GM / (2 * powXY)) * x2 * timeStep;
-        x2 += lastVXOfSphere2 * timeStep;
+        vX2 += (((2 * Gm) / powXYZ) - GM / (2 * powXY)) * x2 * TIME_STEP;
+        x2 += lastVXOfSphere2 * TIME_STEP;
 
-        vY2 += (((2 * Gm) / powXYZ) - GM / (2 * powXY)) * y2 * timeStep;
-        y2 += lastVYOfSphere2 * timeStep;
+        vY2 += (((2 * Gm) / powXYZ) - GM / (2 * powXY)) * y2 * TIME_STEP;
+        y2 += lastVYOfSphere2 * TIME_STEP;
 
 
         // Just separating the calculation steps for M3
@@ -119,10 +126,15 @@ public class Calculator {
 
 
         // Calculate and update velocities and locations (M3):
-        vZ3 += (-1) * ((4 * GM) / powXY) * z3 * timeStep;
-        z3 += lastVZOfSphere3 * timeStep;
+        vZ3 += (-1) * ((4 * GM) / powXY) * z3 * TIME_STEP;
+        z3 += lastVZOfSphere3 * TIME_STEP;
 
-//        writePosDataToCSV();
+        if (skipSteps < SKIP_THRESHOLD) {
+            skipSteps++;
+        } else {
+            writePosDataToCSV();
+            skipSteps = 0;
+        }
         countCycle();
     }
 
@@ -152,13 +164,6 @@ public class Calculator {
         maxY1List = new ArrayList<>();
         minY2List = new ArrayList<>();
         maxY2List = new ArrayList<>();
-
-        minX1 = x1;
-        maxX2 = x2;
-
-        minX1List.add(minX1);
-        maxX2List.add(maxX2);
-
     }
 
     private static void countCycle() {
@@ -244,7 +249,7 @@ public class Calculator {
 
         HashMap<String, String> dataMap = initMap();
 
-        excelInstance = ExcelRecord.getInstance();
+        excelInstance = ExcelWriter.getInstance();
 
         Sheet sheet = excelInstance.getSheet(IC_SHEET);
         excelInstance.writeInitialConditions(sheet, dataMap);
@@ -269,7 +274,7 @@ public class Calculator {
 
     private static HashMap<String, String> initMap() {
         HashMap<String, String> map = new HashMap<>();
-        map.put("time_step", String.valueOf(timeStep));
+        map.put("time_step", String.valueOf(TIME_STEP));
         map.put("GM", String.valueOf(GM));
         map.put("Gm", String.valueOf(Gm));
         map.put("x1", String.valueOf(x1));
@@ -306,7 +311,6 @@ public class Calculator {
     private static void writeEccentricityToExcel() {
         Sheet sheet = excelInstance.getSheet(DATA_SHEET);
         Row row;
-        double a, b, e;
         for (int i = 0; i < maxY1List.size() - 1; i++) {
             row = sheet.getRow(i + 1);
 
