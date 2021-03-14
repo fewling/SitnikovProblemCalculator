@@ -10,14 +10,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-public class ExcelRecord {
+public class ExcelWriter {
 
     private static final String FILE_NAME = "Results.xlsx";
-    private static ExcelRecord instance = null;
+    private static ExcelWriter instance = null;
 
     private XSSFWorkbook workbook;
 
-    public ExcelRecord() throws IOException {
+    public ExcelWriter() throws IOException {
         File file = new File(FILE_NAME);
         if (file.exists()) {
             this.workbook = new XSSFWorkbook(new FileInputStream(FILE_NAME));
@@ -27,9 +27,9 @@ public class ExcelRecord {
         }
     }
 
-    public static ExcelRecord getInstance() throws IOException {
+    public static ExcelWriter getInstance() throws IOException {
         if (instance == null) {
-            instance = new ExcelRecord();
+            instance = new ExcelWriter();
         }
         return instance;
     }
