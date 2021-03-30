@@ -9,16 +9,16 @@ import java.util.List;
 
 public class Calculator {
 
-    public static final int SKIP_THRESHOLD = 10000;
-    public static final int CYCLES = 20;
+    public static final int SKIP_THRESHOLD = 100000;
+    public static final int CYCLES = 800;
     public static final double TIME_STEP = 0.00001;
 
     private static final double GM = 40000;
     private static final double Gm = 0;
 
     // set x1, vY1, z3 and vZ3 only:
-    private static double x1 = -500, y1 = 0, x2 = -1 * x1, y2 = 0, z3 = 350;
-    private static double vX1 = 0, vY1 = 7.07, vX2 = 0, vY2 = -1 * vY1, vZ3 = 0;
+    private static double x1 = -500, y1 = 0, x2 = -1 * x1, y2 = 0, z3 = 0;
+    private static double vX1 = 0, vY1 = 7.07, vX2 = 0, vY2 = -1 * vY1, vZ3 = 1;
 
     public static final String DIRECTORY = String.format("C:\\HP Data\\%s, %s cycles, z3 = %s\\", TIME_STEP, CYCLES, z3);
     private static final String CSV_FILE_NAME = DIRECTORY + String.format("Coordinates, %s, %s, z3 = %s.csv", TIME_STEP, CYCLES, z3);
